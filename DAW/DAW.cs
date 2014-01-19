@@ -11,93 +11,26 @@ namespace DAW
 		{
 			WAVE wave;
 
+			if ( Arg.Length == 0 )
+			{
+				Console.WriteLine( new StreamReader( "info.txt" ).ReadToEnd() );
+				return;
+			}
+			else if ( Arg[0] == "?" )
+			{
+				Console.WriteLine( new StreamReader( "format.txt" ).ReadToEnd() );
+				return;
+			}
+
 			try
 			{
-				if ( Arg[0] == "?" )
-				{
-					Console.WriteLine( "【フォーマット】" );
-					Console.WriteLine( "1. 音色の変更" );
-					Console.WriteLine( "\t以下のいずれかから選んでください。" );
-					Console.WriteLine( "\tsine\t正弦波（デフォルト）" );
-					Console.WriteLine( "\tsquare\t矩形波" );
-					Console.WriteLine( "\ttri\t三角波" );
-					Console.WriteLine( "\tsaw\tのこぎり波" );
-					Console.WriteLine();
-					Console.WriteLine( "2. テンポの変更" );
-					Console.WriteLine( "\tt 小数\t数値は拍/分" );
-					Console.WriteLine();
-					Console.WriteLine( "3. ボリューム（大まかな音量の調整）の変更" );
-					Console.WriteLine( "\tv 小数\tデフォルトは1" );
-					Console.WriteLine( "\t\tトラックごとの音量の設定に使用するといいでしょう" );
-					Console.WriteLine();
-					Console.WriteLine( "4. エクスプレッション（音量の微調整）の変更" );
-					Console.WriteLine( "\te 小数\tデフォルトは1" );
-					Console.WriteLine( "\t\t曲中の音量の変化に使用するといいでしょう" );
-					Console.WriteLine();
-					Console.WriteLine( "5. ディレイ（音の遅れ具合）の変更" );
-					Console.WriteLine( "\t未実装" );
-					Console.WriteLine();
-					Console.WriteLine( "6. コーラス（斉唱のように聞こえる具合）の変更" );
-					Console.WriteLine( "\tcv 小数\tデフォルトは0" );
-					Console.WriteLine( "\t\tコーラス部分の音量" );
-					Console.WriteLine( "\tcw 小数\tデフォルトは0" );
-					Console.WriteLine( "\t\tコーラス部分が本来の音の高さより上下に外れる具合" );
-					Console.WriteLine();
-					Console.WriteLine( "7. ビブラート（音の揺らぎ具合）の変更" );
-					Console.WriteLine( "\tvd 小数\tデフォルトは0" );
-					Console.WriteLine( "\t\tビブラートの幅（1で上下に1半音ずつ揺らぐ）" );
-					Console.WriteLine( "\tvf 小数\tデフォルトは0" );
-					Console.WriteLine( "\t\tビブラートの周波数" );
-					Console.WriteLine();
-					Console.WriteLine( "8. 音符の入力" );
-					Console.WriteLine( "整数 |   整数   |    小数    | 小数" );
-					Console.WriteLine( "音程 | 符の長さ | 発音の長さ | 音量" );
-					Console.WriteLine( "音程:\t\t69が440Hz（A4・ラ）" );
-					Console.WriteLine( "\t\t1大きくなると半音上に" );
-					Console.WriteLine( "\t\t12大きくなると1オクターブ上に" );
-					Console.WriteLine( "符の長さ:\t480が4分音符" );
-					Console.WriteLine( "\t\t1920で1小節（4分の4拍子の場合）" );
-					Console.WriteLine( "発音の長さ:\t0～100" );
-					Console.WriteLine( "\t\t符の長さに対するパーセンテージ" );
-					Console.WriteLine( "音量:\t\tその単一の音符の音量" );
-					Console.WriteLine( "\t\tエクスプレッションよりも細かい調整に使用するといいでしょう" );
-					Console.WriteLine();
-					Console.WriteLine( "9. 休符の入力" );
-					Console.WriteLine( "\tr 整数\t数値は8.の符の長さと同様" );
-					Console.WriteLine();
-					Console.WriteLine( "10. コメントアウトの入力" );
-					Console.WriteLine( "\t// 文章\t文章をコンソール画面に出力します" );
-					Console.WriteLine();
-					Console.WriteLine( "大文字小文字の区別はありません。" );
-					Console.WriteLine( "空行は無視されます。" );
-
-					return;
-				}
-
+				//インスタンスの生成
 				wave = new WAVE( Arg[0] );
-			}
-			catch ( IndexOutOfRangeException )
-			{
-				Console.WriteLine( "DAW.exeです。" );
-				Console.WriteLine( "テキストファイルに保存された譜面から、音声ファイルを作成します。" );
-				Console.WriteLine( "「daw ?」で、フォーマットの詳細を表示します。" );
-				Console.WriteLine( "「daw sample」で、サンプル譜面の音声ファイルを作成します。" );
-				Console.WriteLine();
-				Console.WriteLine( "【使い方】" );
-				Console.WriteLine( "1. 「曲名0.txt」にフォーマットに沿った譜面ファイルを入力して保存してください。※1" );
-				Console.WriteLine( "2. トラック数に応じて、「曲名1.txt」や「曲名2.txt」を保存してください。 ※2" );
-				Console.WriteLine( "3. このコンソール画面に「daw 曲名」と入力してください。" );
-				Console.WriteLine( "4. エラーが出なかったら、コンソール画面に「曲名.wav」と入力してください。すると、Windows Media Playerで再生が始まるはずです。" );
-				Console.WriteLine( "5. 聞き終えたらWindows Media Playerを終了させてください。（これを忘れると、同じファイルに上書きできません）" );
-				Console.WriteLine( "※1 「notepad 曲名0.txt」で、メモ帳を開きます。保存時にエンコード形式を「UTF-8」にするのを絶対に忘れないでください。" );
-				Console.WriteLine( "※2 0→1→2…の順に読み込まれ、前のものに上書きされていきます。音色やコーラスなどの設定は前のテキストファイルで最後に指定されたものを引き継ぎます。テンポも引き継がれますので、途中でテンポを変える時は気をつけて下さい。また、それぞれのトラックはモノシンセ（同時に1つの音しか発音できない）ですので、和音は複数のトラックに分けてください。" );
-
-				return;
 			}
 			catch ( IOException )
 			{
+				//出力先ファイルのオープン失敗
 				Console.WriteLine( "エクスプローラやWindows Media Playerで " + Arg[0] + ".wav が開かれています。閉じてからもう1回実行してください。" );
-
 				return;
 			}
 
