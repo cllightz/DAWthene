@@ -34,7 +34,7 @@ namespace DAW
 				return;
 			}
 
-			for ( int i=0; ; i++ )
+			for ( int i=0; ; ++i )
 			{
 				if ( File.Exists( Arg[0] + i.ToString() + ".txt" ) )
 				{
@@ -52,16 +52,16 @@ namespace DAW
 
 				var file = new StreamReader( Arg[0] + i.ToString() + ".txt", Encoding.UTF8 );
 
-				for ( int loop=1; ; loop++ )
+				for ( int loop = 1; ; ++loop )
 				{
 					var tmp = file.ReadLine();
 
-					if ( tmp==null )
+					if ( tmp == null )
 						break;
 
 					var str = ToString( tmp );
 
-					if ( str[0].Length==0 )
+					if ( str[0].Length == 0 )
 						continue;
 
 					try
@@ -175,12 +175,12 @@ namespace DAW
 			var str = Arg.ToCharArray();
 			string[] res = { "", "", "", "" };
 
-			for ( int i=0, j=0; i<str.Length && j<4; i++ )
+			for ( int i=0, j=0; i<str.Length && j<4; ++i )
 			{
 				if ( str[i]=='\t' || str[i]==' ' )
 				{
 					if ( res[j]!="" )
-						j++;
+						++j;
 				}
 				else if ( j==0 )
 					res[j] += char.ToLower( str[i] );

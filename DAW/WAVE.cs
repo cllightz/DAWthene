@@ -129,7 +129,7 @@ namespace DAW
 
 			double x=0, y=0, z=0, vib=0, prev=0, left=0, center=0, right=0;
 
-			for ( int i=0; i<GetGT( Arg.ST, Arg.GT ); i++ )
+			for ( int i=0; i<GetGT( Arg.ST, Arg.GT ); ++i )
 			{
 				const double SiV=2.0, SqV=0.7, TrV=2.0, SaV=0.8, NoV=0.5;
 				if ( tone == Tone.Sine )
@@ -180,7 +180,7 @@ namespace DAW
 				vib += vib_fre * Math.PI*2.0 / (double)H_fmt_Sam;
 			}
 
-			for ( int i=0; i<(GetGT( Arg.ST, 100 ) - GetGT( Arg.ST, Arg.GT )); i++ )
+			for ( int i=0; i<(GetGT( Arg.ST, 100 ) - GetGT( Arg.ST, Arg.GT )); ++i )
 				Next();
 		}
 
@@ -191,7 +191,7 @@ namespace DAW
 
 		public void Rest(int ST)
 		{
-			for ( int i=0; i<GetGT( ST, 100 ); i++ )
+			for ( int i=0; i<GetGT( ST, 100 ); ++i )
 				Next();
 		}
 
@@ -237,11 +237,11 @@ namespace DAW
 				byte[] a = new byte[1];
 				System.Security.Cryptography.RNGCryptoServiceProvider b = new System.Security.Cryptography.RNGCryptoServiceProvider();
 				b.GetBytes( a );
-				NoiseDone++;
+				++NoiseDone;
 				return (100.0 * (double)Convert.ToInt16( a[0] ) - short.MaxValue * 0.375);
 			}
 
-			NoiseDone++;
+			++NoiseDone;
 			return NoiseLast;
 		}
 
@@ -250,10 +250,12 @@ namespace DAW
 			if ( pos == data.Count )
 			{
 				data.Add( new Stereo( 0.0, 0.0 ) );
-				pos++;
+				++pos;
 			}
 			else
-				pos++;
+			{
+				++pos;
+			}
 
 			high = 0.0;
 			mid = 0.0;

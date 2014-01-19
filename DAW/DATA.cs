@@ -35,17 +35,17 @@
 
 		public Stereo(double left, double right)
 		{
-			this.Left = left;
-			this.Right = right;
+			Left = left;
+			Right = right;
 		}
 	}
 
 	public enum Tone
 	{
-		Sine,
-		Square,
-		Tri,
-		Saw,
-		Noise
+		Sine,	//正弦波
+		Square,	//矩形波
+		Tri,	//三角波
+		Saw,	//ノコギリ波
+		Noise	//ホワイトノイズ
 	}
 }
