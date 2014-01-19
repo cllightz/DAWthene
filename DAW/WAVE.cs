@@ -25,7 +25,7 @@ namespace DAW
 
 		private BinaryWriter file;
 
-		private List<Pair<double, double>> data;
+		private List<Stereo<double, double>> data;
 
 		private int pos;
 
@@ -53,7 +53,7 @@ namespace DAW
 
 		public WAVE(string Arg)
 		{
-			Bytes = sizeof(short);
+			Bytes = sizeof( short );
 
 			H_RIFF = new byte[4] { 0x52, 0x49, 0x46, 0x46 };
 			H_FileSize = 0;
@@ -67,9 +67,9 @@ namespace DAW
 			H_data = new byte[4] { 0x64, 0x61, 0x74, 0x61 };
 			H_data_Size = 0;
 
-			file = new BinaryWriter(new FileStream(Arg + ".wav", FileMode.Create, FileAccess.Write));
+			file = new BinaryWriter( new FileStream( Arg + ".wav", FileMode.Create, FileAccess.Write ) );
 
-			data = new List<Pair<double, double>>();
+			data = new List<Stereo<double, double>>();
 
 			pos = 0;
 
@@ -93,14 +93,14 @@ namespace DAW
 			NoiseLast = 0.0;
 		}
 
-		private void Marge(Pair<double, double> Arg)
+		private void Marge(Stereo<double, double> Arg)
 		{
-			if (pos == data.Count)
-				data.Add(Arg);
+			if ( pos == data.Count )
+				data.Add( Arg );
 			else
 			{
 				data[pos].First += Arg.First;
-				data[pos].Second += Arg.Second;
+				data[pos].Right += Arg.Right;
 			}
 
 			Next();
@@ -122,37 +122,37 @@ namespace DAW
 
 			double x=0, y=0, z=0, vib=0, prev=0, left=0, center=0, right=0;
 
-			for (int i=0; i<GetGT(ST, GT); i++)
+			for ( int i=0; i<GetGT( ST, GT ); i++ )
 			{
 				const double SiV=2.0, SqV=0.7, TrV=2.0, SaV=0.8, NoV=0.5;
-				if (tone == Tone.Sine)
+				if ( tone == Tone.Sine )
 				{
-					high = Sine(x) * SiV;
-					mid = Sine(y) * SiV;
-					low = Sine(z) * SiV;
+					high = Sine( x ) * SiV;
+					mid = Sine( y ) * SiV;
+					low = Sine( z ) * SiV;
 				}
-				else if (tone == Tone.Square)
+				else if ( tone == Tone.Square )
 				{
-					high = Square(x) * SqV;
-					mid = Square(y) * SqV;
-					low = Square(z) * SqV;
+					high = Square( x ) * SqV;
+					mid = Square( y ) * SqV;
+					low = Square( z ) * SqV;
 				}
-				else if (tone == Tone.Tri)
+				else if ( tone == Tone.Tri )
 				{
-					high = Tri(x) * TrV;
-					mid = Tri(y) * TrV;
-					low = Tri(z) * TrV;
+					high = Tri( x ) * TrV;
+					mid = Tri( y ) * TrV;
+					low = Tri( z ) * TrV;
 				}
-				else if (tone == Tone.Saw)
+				else if ( tone == Tone.Saw )
 				{
-					high = Saw(x) * SaV;
-					mid = Saw(y) * SaV;
-					low = Saw(z) * SaV;
+					high = Saw( x ) * SaV;
+					mid = Saw( y ) * SaV;
+					low = Saw( z ) * SaV;
 				}
-				else if (tone == Tone.Noise)
+				else if ( tone == Tone.Noise )
 				{
 					high = 0.0;
-					mid = Noise(Key) / (short.MaxValue * 0.5) * NoV;
+					mid = Noise( Key ) / (short.MaxValue * 0.5) * NoV;
 					low = 0.0;
 				}
 
@@ -164,27 +164,27 @@ namespace DAW
 
 				left = center * (panpot - 100) * -1;
 				right = center * (panpot + 100);
-				Marge(new Pair<double, double>(left, right));
+				Marge( new Stereo<double, double>( left, right ) );
 
-				x += Freq(Key, Math.Sin(vib) * vib_dep + chorus_wid) / (double)H_fmt_Sam * (Math.PI * 2.0);
-				y += Freq(Key, Math.Sin(vib) * vib_dep) / (double)H_fmt_Sam * (Math.PI * 2.0);
-				z += Freq(Key, Math.Sin(vib) * vib_dep - chorus_wid) / (double)H_fmt_Sam * (Math.PI * 2.0);
-				
+				x += Freq( Key, Math.Sin( vib ) * vib_dep + chorus_wid ) / (double)H_fmt_Sam * (Math.PI * 2.0);
+				y += Freq( Key, Math.Sin( vib ) * vib_dep ) / (double)H_fmt_Sam * (Math.PI * 2.0);
+				z += Freq( Key, Math.Sin( vib ) * vib_dep - chorus_wid ) / (double)H_fmt_Sam * (Math.PI * 2.0);
+
 				vib += vib_fre * Math.PI*2.0 / (double)H_fmt_Sam;
 			}
 
-			for (int i=0; i<(GetGT(ST, 100) - GetGT(ST, GT)); i++)
+			for ( int i=0; i<(GetGT( ST, 100 ) - GetGT( ST, GT )); i++ )
 				Next();
 		}
 
 		private double Freq(int Key, double Pitch)
 		{
-			return A * Math.Pow(2.0, ((double)Key + Pitch) / 12.0);
+			return A * Math.Pow( 2.0, ((double)Key + Pitch) / 12.0 );
 		}
 
 		public void Rest(int ST)
 		{
-			for (int i=0; i<GetGT(ST, 100); i++)
+			for ( int i=0; i<GetGT( ST, 100 ); i++ )
 				Next();
 		}
 
@@ -195,54 +195,54 @@ namespace DAW
 
 		private double Sine(double Arg)
 		{
-			return Math.Sin(Arg);
+			return Math.Sin( Arg );
 		}
 
 		private double Square(double Arg)
 		{
-			return ((Math.Sin(Arg) >= 0.0) ? 1.0 : -1.0);
+			return ((Math.Sin( Arg ) >= 0.0) ? 1.0 : -1.0);
 		}
 
 		private double Tri(double Arg)
 		{
-			double a = Arg - Math.Floor(Arg / (Math.PI * 2.0)) * Math.PI * 2.0;
+			double a = Arg - Math.Floor( Arg / (Math.PI * 2.0) ) * Math.PI * 2.0;
 
-			if (a < Math.PI * 0.5)
+			if ( a < Math.PI * 0.5 )
 				return a / (Math.PI * 0.5);
-			
-			if (a < Math.PI * 1.5)
+
+			if ( a < Math.PI * 1.5 )
 				return -1 * a / (Math.PI * 0.5) + 2.0;
 
-			return a / (Math.PI * 0.5) - 4.0;	
+			return a / (Math.PI * 0.5) - 4.0;
 		}
 
 		private double Saw(double Arg)
 		{
-			double a = Arg - Math.Floor(Arg / (Math.PI * 2.0)) * Math.PI * 2.0;
+			double a = Arg - Math.Floor( Arg / (Math.PI * 2.0) ) * Math.PI * 2.0;
 
 			return (a / (Math.PI * 2.0) - 0.5) * 2.0;
 		}
 
 		private double Noise(int Key)
 		{
-			if (Key==0 || NoiseDone%Key==0)
+			if ( Key==0 || NoiseDone%Key==0 )
 			{
 				byte[] a = new byte[1];
 				System.Security.Cryptography.RNGCryptoServiceProvider b = new System.Security.Cryptography.RNGCryptoServiceProvider();
-				b.GetBytes(a);
+				b.GetBytes( a );
 				NoiseDone++;
-				return (100.0 * (double)Convert.ToInt16(a[0]) - short.MaxValue * 0.375);
+				return (100.0 * (double)Convert.ToInt16( a[0] ) - short.MaxValue * 0.375);
 			}
 
 			NoiseDone++;
 			return NoiseLast;
 		}
-			
+
 		private void Next()
 		{
-			if (pos == data.Count)
+			if ( pos == data.Count )
 			{
-				data.Add(new Pair<double, double>(0.0, 0.0));
+				data.Add( new Stereo<double, double>( 0.0, 0.0 ) );
 				pos++;
 			}
 			else
@@ -258,27 +258,27 @@ namespace DAW
 			H_data_Size = (uint)((data.Count) * H_fmt_Ch * Bytes);
 			H_FileSize = H_data_Size + H_fmt_Size + 20;
 
-//			Console.WriteLine(H_FileSize.ToString());
-//			Console.WriteLine(H_data_Size.ToString());
+			//			Console.WriteLine(H_FileSize.ToString());
+			//			Console.WriteLine(H_data_Size.ToString());
 
-			file.Write(H_RIFF);
-			file.Write(H_FileSize);
-			file.Write(H_WAVE);
-			file.Write(H_fmt);
-			file.Write(H_fmt_Size);
-			file.Write(H_fmt_ID);
-			file.Write(H_fmt_Ch);
-			file.Write(H_fmt_Sam);
-			file.Write(H_fmt_BySe);
-			file.Write(H_fmt_Blo);
-			file.Write(H_fmt_BiSa);
-			file.Write(H_data);
-			file.Write(H_data_Size);
+			file.Write( H_RIFF );
+			file.Write( H_FileSize );
+			file.Write( H_WAVE );
+			file.Write( H_fmt );
+			file.Write( H_fmt_Size );
+			file.Write( H_fmt_ID );
+			file.Write( H_fmt_Ch );
+			file.Write( H_fmt_Sam );
+			file.Write( H_fmt_BySe );
+			file.Write( H_fmt_Blo );
+			file.Write( H_fmt_BiSa );
+			file.Write( H_data );
+			file.Write( H_data_Size );
 
-			foreach (var i in data)
+			foreach ( var i in data )
 			{
-				Write(i.First);
-				Write(i.Second);
+				Write( i.First );
+				Write( i.Right );
 			}
 		}
 
@@ -286,25 +286,29 @@ namespace DAW
 		{
 			short New;
 
-			if (Arg > short.MaxValue)
+			if ( Arg > short.MaxValue )
 			{
-//				Console.WriteLine(Arg.ToString());
+				//				Console.WriteLine(Arg.ToString());
 				New = short.MaxValue;
 			}
-			else if (Arg < short.MinValue)
+			else if ( Arg < short.MinValue )
 			{
-//				Console.WriteLine(Arg.ToString());
+				//				Console.WriteLine(Arg.ToString());
 				New = short.MinValue;
 			}
 			else
 				New = (short)Arg;
 
-			file.Write(New);
+			file.Write( New );
 		}
 
 		public enum Tone
 		{
-			Sine, Square, Tri, Saw, Noise
+			Sine,
+			Square,
+			Tri,
+			Saw,
+			Noise
 		}
 	}
 }
