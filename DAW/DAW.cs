@@ -162,7 +162,7 @@ namespace DAW
 								Console.WriteLine( "ディレイ音量: " + str[1] );
 								break;
 							case "ds":
-								wave.delay_spe = double.Parse( str[1] );
+								wave.delay_tim = double.Parse( str[1] );
 								Console.WriteLine( "ディレイ速度: " + str[1] );
 								break;
 							case "cv":
@@ -202,8 +202,8 @@ namespace DAW
 								Console.WriteLine( "音色: ノイズ" );
 								break;
 							default:
-								int b;
-								if ( int.TryParse( str[0], out b ) )
+								double b;
+								if ( double.TryParse( str[0], out b ) )
 								{
 									wave.Add( new Note( b, int.Parse( str[1] ), double.Parse( str[2] ), double.Parse( str[3] ) ) );
 									if ( loop % 10 == 1 )

@@ -6,93 +6,101 @@ namespace DAW
 {
 	class WAVE
 	{
+		#region メンバ
 		private	byte	Bytes;
 
-		private	byte[]	H_RIFF;
-		private	uint	H_FileSize;
-		private	byte[]	H_WAVE;
-		private	byte[]	H_fmt;
-		private	uint	H_fmt_Size	= 16;
-		private	ushort	H_fmt_ID	= 1;
-		private	ushort	H_fmt_Ch;
-		private	uint	H_fmt_Sam;
-		private	uint	H_fmt_BySe;
-		private	ushort	H_fmt_Blo;
-		private	ushort	H_fmt_BiSa;
-		private	byte[]	H_data;
-		private	uint	H_data_Size;
+		private	byte[]	H_RIFF;				//RIFFヘッダ
+		private	uint	H_FileSize;			//ファイルサイズ[byte]
+		private	byte[]	H_WAVE;				//WAVEヘッダ
+		private	byte[]	H_fmt;				//fmtチャンク
+		private	uint	H_fmt_Size	= 16;	//fmtチャンクのサイズ[byte]
+		private	ushort	H_fmt_ID	= 1;	//フォーマットID
+		private	ushort	H_fmt_Ch;			//チャンネル数
+		private	uint	H_fmt_Sam;			//サンプリングレート[Hz]
+		private	uint	H_fmt_BySe;			//データ速度(Sam*Blo)[Byte]
+		private	ushort	H_fmt_Blo;			//ブロックサイズ(Bisa/8*Ch)[Byte]
+		private	ushort	H_fmt_BiSa;			//サンプルごとのビット数
+		private	byte[]	H_data;				//dataチャンク
+		private	uint	H_data_Size;		//dataチャンクのサイズ[byte]
 
-		private BinaryWriter file;
+		private BinaryWriter file;		//出力先のファイル
 
-		private List<Stereo<double, double>> data;
+		private List< Stereo > data;	//マージ先のデータ
 
-		private int pos;
+		private int pos;				//現在処理中のサンプルの位置
 
-		public Tone tone;
-		public double tempo;
-		public double panpot;
-		public double volume;
-		public double expression;
-		public double delay_vol;
-		public double delay_spe;
-		public double chorus_vol;
-		public double chorus_wid;
-		public double vib_dep;
-		public double vib_fre;
+		public Tone tone;			//音色(デフォルトはsine)
+		public double tempo;		//テンポ(デフォルトは120BPM)
+		public double panpot;		//パンポット(デフォルトは0)
+		public double volume;		//ボリューム(デフォルトは1)
+		public double expression;	//エクスプレッション(デフォルトは1)
+		public double delay_vol;	//ディレイの音量(デフォルトは0)、未実装
+		public double delay_tim;	//ディレイの時間(デフォルトは0)、未実装
+		public double chorus_vol;	//コーラスの音量(デフォルトは0)
+		public double chorus_wid;	//コーラスの豊かさ(デフォルトは0)
+		public double vib_dep;		//ビブラートの深さ(デフォルトは0)
+		public double vib_fre;		//ビブラートの周波数(デフォルトは0)
 
-		private const double A = 6.875;
-		private const int root = -3;
+		private const double A = 6.875;	//なんの係数だっけ(忘れた)
+		private const int root = -3;	//根音……？
 
-		private double high;
-		private double mid;
-		private double low;
+		private double high;	//コーラスの上の音
+		private double mid;		//コーラスの真ん中の音
+		private double low;		//コーラスの下の音
 
-		private int NoiseDone;
-		private double NoiseLast;
+		private int NoiseDone;		//ノイズ関連
+		private double NoiseLast;	//前のサンプルでの量子
+		#endregion
 
 		public WAVE(string Arg)
 		{
-			Bytes = sizeof( short );
+			Bytes = sizeof( short );	//16[bit]
 
-			H_RIFF = new byte[4] { 0x52, 0x49, 0x46, 0x46 };
+			H_RIFF = new byte[4] { 0x52, 0x49, 0x46, 0x46 };	//"RIFF"
 			H_FileSize = 0;
-			H_WAVE = new byte[4] { 0x57, 0x41, 0x56, 0x45 };
-			H_fmt = new byte[4] { 0x66, 0x6d, 0x74, 0x20 };
-			H_fmt_Ch = 2;
-			H_fmt_Sam = 44100;
+			H_WAVE = new byte[4] { 0x57, 0x41, 0x56, 0x45 };	//"WAVE"
+			H_fmt = new byte[4] { 0x66, 0x6d, 0x74, 0x20 };		//"fmt "
+			H_fmt_Ch = 2;										//ステレオ
+			H_fmt_Sam = 44100;									//44100[Hz]
 			H_fmt_BySe = (uint)(Bytes * H_fmt_Ch * H_fmt_Sam);
 			H_fmt_Blo = (ushort)(Bytes * H_fmt_Ch);
 			H_fmt_BiSa = (ushort)(Bytes * 8);
-			H_data = new byte[4] { 0x64, 0x61, 0x74, 0x61 };
+			H_data = new byte[4] { 0x64, 0x61, 0x74, 0x61 };	//"data"
 			H_data_Size = 0;
 
+			//出力先ファイルを開く
 			file = new BinaryWriter( new FileStream( Arg + ".wav", FileMode.Create, FileAccess.Write ) );
 
-			data = new List<Stereo<double, double>>();
+			//マージ先のデータ
+			data = new List< Stereo >();
 
+			//現在処理中のサンプルの位置
 			pos = 0;
 
+			//音符関連
 			tone = Tone.Sine;
 			tempo = 120.0;
 			panpot = 0;
 			volume = 1;
 			expression = 10;
 			delay_vol = 0.0;
-			delay_spe = 0.0;
+			delay_tim = 0.0;
 			chorus_vol = 0.0;
 			chorus_wid = 0.0;
 			vib_dep = 0.0;
 			vib_fre = 0.0;
 
+			//コーラス関連
 			high = 0.0;
 			mid = 0.0;
 			low = 0.0;
 
+			//ノイズ関連
 			NoiseDone = 0;
 			NoiseLast = 0.0;
 		}
 
-		private void Marge(Stereo<double, double> Arg)
+		private void Marge(Stereo Arg)
 		{
 			if ( pos == data.Count )
 				data.Add( Arg );
@@ -115,7 +123,7 @@ namespace DAW
 
 		public void Add(Note Arg)
 		{
-			int Key = Arg.Key - root;
+			double Key = Arg.Key - root;
 
 			Arg.GT = (Arg.GT > 100) ? 100 : Arg.GT;
 
@@ -163,7 +171,7 @@ namespace DAW
 
 				left = center * (panpot - 100) * -1;
 				right = center * (panpot + 100);
-				Marge( new Stereo<double, double>( left, right ) );
+				Marge( new Stereo( left, right ) );
 
 				x += Freq( Key, Math.Sin( vib ) * vib_dep + chorus_wid ) / (double)H_fmt_Sam * (Math.PI * 2.0);
 				y += Freq( Key, Math.Sin( vib ) * vib_dep ) / (double)H_fmt_Sam * (Math.PI * 2.0);
@@ -176,9 +184,9 @@ namespace DAW
 				Next();
 		}
 
-		private double Freq(int Key, double Pitch)
+		private double Freq(double Key, double Pitch)
 		{
-			return A * Math.Pow( 2.0, ((double)Key + Pitch) / 12.0 );
+			return A * Math.Pow( 2.0, (Key + Pitch) / 12.0 );
 		}
 
 		public void Rest(int ST)
@@ -189,7 +197,7 @@ namespace DAW
 
 		private double GetGT(int ST, double GT)
 		{
-			return ((double)ST * (double)GT * (double)H_fmt_Sam) / (100.0 * 480.0 * (tempo / 60.0));
+			return ((double)ST * GT * (double)H_fmt_Sam) / (100.0 * 480.0 * (tempo / 60.0));
 		}
 
 		private double Sine(double Arg)
@@ -222,7 +230,7 @@ namespace DAW
 			return (a / (Math.PI * 2.0) - 0.5) * 2.0;
 		}
 
-		private double Noise(int Key)
+		private double Noise(double Key)
 		{
 			if ( Key==0 || NoiseDone%Key==0 )
 			{
@@ -241,7 +249,7 @@ namespace DAW
 		{
 			if ( pos == data.Count )
 			{
-				data.Add( new Stereo<double, double>( 0.0, 0.0 ) );
+				data.Add( new Stereo( 0.0, 0.0 ) );
 				pos++;
 			}
 			else
