@@ -1,5 +1,4 @@
-﻿using Algorithm;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -99,7 +98,7 @@ namespace DAW
 				data.Add( Arg );
 			else
 			{
-				data[pos].First += Arg.First;
+				data[pos].Left += Arg.Left;
 				data[pos].Right += Arg.Right;
 			}
 
@@ -277,7 +276,7 @@ namespace DAW
 
 			foreach ( var i in data )
 			{
-				Write( i.First );
+				Write( i.Left );
 				Write( i.Right );
 			}
 		}
