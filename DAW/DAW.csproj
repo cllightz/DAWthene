@@ -43,8 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DATA.cs" />
     <Compile Include="DAW.cs" />
-    <Compile Include="Pair.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WAVE.cs" />
   </ItemGroup>

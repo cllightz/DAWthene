@@ -113,15 +113,15 @@ namespace DAW
 			low = 0.0;
 		}
 
-		public void Add(int ArgKey, int ST, double GT, double Vel)
+		public void Add(Note Arg)
 		{
-			int Key = ArgKey - root;
+			int Key = Arg.Key - root;
 
-			GT = (GT > 100) ? 100 : GT;
+			Arg.GT = (Arg.GT > 100) ? 100 : Arg.GT;
 
 			double x=0, y=0, z=0, vib=0, prev=0, left=0, center=0, right=0;
 
-			for ( int i=0; i<GetGT( ST, GT ); i++ )
+			for ( int i=0; i<GetGT( Arg.ST, Arg.GT ); i++ )
 			{
 				const double SiV=2.0, SqV=0.7, TrV=2.0, SaV=0.8, NoV=0.5;
 				if ( tone == Tone.Sine )
@@ -158,7 +158,7 @@ namespace DAW
 				high *= chorus_vol;
 				low *= chorus_vol;
 
-				center = (high + mid + low) * volume * expression * Vel;
+				center = (high + mid + low) * volume * expression * Arg.Vel;
 				prev = center;
 
 				left = center * (panpot - 100) * -1;
@@ -172,7 +172,7 @@ namespace DAW
 				vib += vib_fre * Math.PI*2.0 / (double)H_fmt_Sam;
 			}
 
-			for ( int i=0; i<(GetGT( ST, 100 ) - GetGT( ST, GT )); i++ )
+			for ( int i=0; i<(GetGT( Arg.ST, 100 ) - GetGT( Arg.ST, Arg.GT )); i++ )
 				Next();
 		}
 
@@ -299,15 +299,6 @@ namespace DAW
 				New = (short)Arg;
 
 			file.Write( New );
-		}
-
-		public enum Tone
-		{
-			Sine,
-			Square,
-			Tri,
-			Saw,
-			Noise
 		}
 	}
 }
