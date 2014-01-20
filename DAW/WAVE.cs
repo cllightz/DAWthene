@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DATA;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -72,7 +73,7 @@ namespace DAW
 			file = new BinaryWriter( new FileStream( Arg + ".wav", FileMode.Create, FileAccess.Write ) );
 
 			//マージ先のデータ
-			data = new List< Stereo >();
+			data = new List<Stereo>();
 
 			//現在処理中のサンプルの位置
 			pos = 0;
@@ -104,8 +105,7 @@ namespace DAW
 		{
 			if ( pos == data.Count )
 				data.Add( Arg );
-			else
-			{
+			else {
 				data[pos].Left += Arg.Left;
 				data[pos].Right += Arg.Right;
 			}
@@ -129,35 +129,25 @@ namespace DAW
 
 			double x=0, y=0, z=0, vib=0, prev=0, left=0, center=0, right=0;
 
-			for ( int i=0; i<GetGT( Arg.ST, Arg.GT ); ++i )
-			{
+			for ( int i=0; i<GetGT( Arg.ST, Arg.GT ); ++i ) {
 				const double SiV=2.0, SqV=0.7, TrV=2.0, SaV=0.8, NoV=0.5;
-				if ( tone == Tone.Sine )
-				{
+				if ( tone == Tone.Sine ) {
 					high = Sine( x ) * SiV;
 					mid = Sine( y ) * SiV;
 					low = Sine( z ) * SiV;
-				}
-				else if ( tone == Tone.Square )
-				{
+				} else if ( tone == Tone.Square ) {
 					high = Square( x ) * SqV;
 					mid = Square( y ) * SqV;
 					low = Square( z ) * SqV;
-				}
-				else if ( tone == Tone.Tri )
-				{
+				} else if ( tone == Tone.Tri ) {
 					high = Tri( x ) * TrV;
 					mid = Tri( y ) * TrV;
 					low = Tri( z ) * TrV;
-				}
-				else if ( tone == Tone.Saw )
-				{
+				} else if ( tone == Tone.Saw ) {
 					high = Saw( x ) * SaV;
 					mid = Saw( y ) * SaV;
 					low = Saw( z ) * SaV;
-				}
-				else if ( tone == Tone.Noise )
-				{
+				} else if ( tone == Tone.Noise ) {
 					high = 0.0;
 					mid = Noise( Key ) / (short.MaxValue * 0.5) * NoV;
 					low = 0.0;
@@ -232,8 +222,7 @@ namespace DAW
 
 		private double Noise(double Key)
 		{
-			if ( Key==0 || NoiseDone%Key==0 )
-			{
+			if ( Key==0 || NoiseDone%Key==0 ) {
 				byte[] a = new byte[1];
 				System.Security.Cryptography.RNGCryptoServiceProvider b = new System.Security.Cryptography.RNGCryptoServiceProvider();
 				b.GetBytes( a );
@@ -247,13 +236,10 @@ namespace DAW
 
 		private void Next()
 		{
-			if ( pos == data.Count )
-			{
+			if ( pos == data.Count ) {
 				data.Add( new Stereo( 0.0, 0.0 ) );
 				++pos;
-			}
-			else
-			{
+			} else {
 				++pos;
 			}
 
@@ -284,8 +270,7 @@ namespace DAW
 			file.Write( H_data );
 			file.Write( H_data_Size );
 
-			foreach ( var i in data )
-			{
+			foreach ( var i in data ) {
 				Write( i.Left );
 				Write( i.Right );
 			}
@@ -295,17 +280,13 @@ namespace DAW
 		{
 			short New;
 
-			if ( Arg > short.MaxValue )
-			{
+			if ( Arg > short.MaxValue ) {
 				//				Console.WriteLine(Arg.ToString());
 				New = short.MaxValue;
-			}
-			else if ( Arg < short.MinValue )
-			{
+			} else if ( Arg < short.MinValue ) {
 				//				Console.WriteLine(Arg.ToString());
 				New = short.MinValue;
-			}
-			else
+			} else
 				New = (short)Arg;
 
 			file.Write( New );

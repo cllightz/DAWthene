@@ -11,49 +11,37 @@ namespace DAW
 		{
 			WAVE wave;
 
-			if ( Arg.Length == 0 )
-			{
+			if ( Arg.Length == 0 ) {
 				Console.WriteLine( new StreamReader( "info.txt" ).ReadToEnd() );
 				return;
-			}
-			else if ( Arg[0] == "?" )
-			{
+			} else if ( Arg[0] == "?" ) {
 				Console.WriteLine( new StreamReader( "format.txt" ).ReadToEnd() );
 				return;
 			}
 
-			try
-			{
+			try {
 				//インスタンスの生成
 				wave = new WAVE( Arg[0] );
-			}
-			catch ( IOException )
-			{
+			} catch ( IOException ) {
 				//出力先ファイルのオープン失敗
 				Console.WriteLine( "エクスプローラやWindows Media Playerで " + Arg[0] + ".wav が開かれています。閉じてからもう1回実行してください。" );
 				return;
 			}
 
-			for ( int i=0; ; ++i )
-			{
-				if ( File.Exists( Arg[0] + i.ToString() + ".txt" ) )
-				{
+			for ( int i=0; ; ++i ) {
+				if ( File.Exists( Arg[0] + i.ToString() + ".txt" ) ) {
 					Console.WriteLine();
 					Console.WriteLine();
 					Console.WriteLine( '"' + Arg[0] + i.ToString() + ".txt" + '"' );
-				}
-				else if ( i==0 )
-				{
+				} else if ( i==0 ) {
 					Console.WriteLine( "入力ファイルが1つもありません。" );
 					break;
-				}
-				else
+				} else
 					break;
 
 				var file = new StreamReader( Arg[0] + i.ToString() + ".txt", Encoding.UTF8 );
 
-				for ( int loop = 1; ; ++loop )
-				{
+				for ( int loop = 1; ; ++loop ) {
 					var tmp = file.ReadLine();
 
 					if ( tmp == null )
@@ -64,10 +52,8 @@ namespace DAW
 					if ( str[0].Length == 0 )
 						continue;
 
-					try
-					{
-						switch ( str[0] )
-						{
+					try {
+						switch ( str[0] ) {
 							case "//":
 								Console.WriteLine( str[1] );
 								break;
@@ -136,22 +122,17 @@ namespace DAW
 								break;
 							default:
 								double b;
-								if ( double.TryParse( str[0], out b ) )
-								{
+								if ( double.TryParse( str[0], out b ) ) {
 									wave.Add( new Note( b, int.Parse( str[1] ), double.Parse( str[2] ), double.Parse( str[3] ) ) );
 									if ( loop % 10 == 1 )
 										Console.Write( "." );
-								}
-								else
-								{
+								} else {
 									Console.WriteLine( "【エラー】以下の行で書式が間違っています。" );
 									Console.WriteLine( Arg[0] + i.ToString() + ".txt " + loop.ToString() + "行目: " + '"' + tmp + '"' );
 								}
 								break;
 						}
-					}
-					catch ( FormatException )
-					{
+					} catch ( FormatException ) {
 						Console.WriteLine();
 						Console.WriteLine( "【エラー】以下の行で書式が間違っています。" );
 						Console.WriteLine( Arg[0] + i.ToString() + ".txt " + loop.ToString() + "行目: " + '"' + tmp + '"' );
@@ -175,14 +156,11 @@ namespace DAW
 			var str = Arg.ToCharArray();
 			string[] res = { "", "", "", "" };
 
-			for ( int i=0, j=0; i<str.Length && j<4; ++i )
-			{
-				if ( str[i]=='\t' || str[i]==' ' )
-				{
+			for ( int i=0, j=0; i<str.Length && j<4; ++i ) {
+				if ( str[i]=='\t' || str[i]==' ' ) {
 					if ( res[j]!="" )
 						++j;
-				}
-				else if ( j==0 )
+				} else if ( j==0 )
 					res[j] += char.ToLower( str[i] );
 				else
 					res[j] += str[i];
