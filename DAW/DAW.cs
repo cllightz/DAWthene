@@ -8,163 +8,224 @@ namespace DAW
 {
 	class DAW
 	{
-		public static void Main(string[] Arg)
-		{
-			WAVE wave;
+		private static WAVE wave;
+		private static string FileName;
+		private static int FileNum;
+		private static int LineNum;
+		private static string LineStr;
+		private static int errors;
 
-			if ( Arg.Length == 0 ) {
+		public static void Main( string[] Arg )
+		{
+			#region 開始
+			errors = 0;
+
+			if ( Arg.Length == 0 ) { //"daw"
 				Console.WriteLine( new StreamReader( "info.txt" ).ReadToEnd() );
 				return;
-			} else if ( Arg[0] == "?" ) {
+			} else if ( Arg[0] == "?" ) { //"daw ?"
 				Console.WriteLine( new StreamReader( "format.txt" ).ReadToEnd() );
 				return;
 			}
 
+			FileName = Arg[0];
+
 			try {
 				//インスタンスの生成
-				wave = new WAVE( Arg[0] );
+				wave = new WAVE( FileName );
 			} catch ( IOException ) {
 				//出力先ファイルのオープン失敗
-				Console.WriteLine( "エクスプローラやWindows Media Playerで " + Arg[0] + ".wav が開かれています。閉じてからもう1回実行してください。" );
+				Console.WriteLine( "エクスプローラやWindows Media Playerで " + FileName + ".wav が開かれています。" );
+				Console.WriteLine( "閉じてからもう1回実行してください。" );
 				return;
 			}
+			#endregion
 
-			for ( int i=0; ; ++i ) {
-				if ( File.Exists( Arg[0] + i.ToString() + ".txt" ) ) {
+			for ( FileNum = 0; ; ++FileNum ) {
+				#region 入力元ファイルのオープン
+				//入力元ファイルが存在するかをチェック
+				if ( File.Exists( FileName + FileNum.ToString() + ".txt" ) ) {
 					Console.WriteLine();
 					Console.WriteLine();
-					Console.WriteLine( '"' + Arg[0] + i.ToString() + ".txt" + '"' );
-				} else if ( i==0 ) {
+					Console.WriteLine( '"' + FileName + FileNum.ToString() + ".txt" + '"' );
+				} else if ( FileNum == 0 ) {
 					Console.WriteLine( "入力ファイルが1つもありません。" );
 					break;
-				} else
+				} else {
 					break;
+				}
 
-				var file = new StreamReader( Arg[0] + i.ToString() + ".txt", Encoding.UTF8 );
+				//入力元ファイルをオープン
+				var file = new StreamReader( FileName + FileNum.ToString() + ".txt", Encoding.UTF8 );
+				#endregion
 
-				for ( int loop = 1; ; ++loop ) {
-					var tmp = file.ReadLine();
-
-					if ( tmp == null )
-						break;
-
-					var str = ToString( tmp );
-
-					if ( str[0].Length == 0 )
-						continue;
+				for ( LineNum = 1; ( LineStr = file.ReadLine() ) != null; ++LineNum ) {
+					var token = Tokenize( LineStr );
 
 					try {
-						switch ( str[0] ) {
-							case "//":
-								Console.WriteLine( str[1] );
+						switch ( token.Count ) {
+							case 0:
+								continue;
+
+							case 1:
+							case 2:
+								Func( token );
 								break;
-							case "r":
-								wave.Rest( int.Parse( str[1] ) );
+
+							case 3:
+								Error( "引数に過不足がありませんか？" );
 								break;
-							case "t":
-								wave.tempo = double.Parse( str[1] );
-								Console.WriteLine( "テンポ: " + str[1] );
-								break;
-							case "p":
-								wave.panpot = double.Parse( str[1] );
-								Console.WriteLine( "パンポット: " + str[1] );
-								break;
-							case "v":
-								wave.volume = double.Parse( str[1] );
-								Console.WriteLine( "ボリューム: " + str[1] );
-								break;
-							case "e":
-								wave.expression = double.Parse( str[1] );
-								Console.WriteLine( "エクスプレッション: " + str[1] );
-								break;
-							case "dv":
-								wave.delay_vol = double.Parse( str[1] );
-								Console.WriteLine( "ディレイ音量: " + str[1] );
-								break;
-							case "ds":
-								wave.delay_tim = double.Parse( str[1] );
-								Console.WriteLine( "ディレイ速度: " + str[1] );
-								break;
-							case "cv":
-								wave.chorus_vol = double.Parse( str[1] );
-								Console.WriteLine( "コーラス音量: " + str[1] );
-								break;
-							case "cw":
-								wave.chorus_wid = double.Parse( str[1] );
-								Console.WriteLine( "コーラス幅: " + str[1] );
-								break;
-							case "vd":
-								wave.vib_dep = double.Parse( str[1] );
-								Console.WriteLine( "ビブラート幅: " + str[1] );
-								break;
-							case "vf":
-								wave.vib_fre = double.Parse( str[1] );
-								Console.WriteLine( "ビブラート速度: " + str[1] );
-								break;
-							case "sine":
-								wave.tone = Tone.Sine;
-								Console.WriteLine( "音色: 正弦波" );
-								break;
-							case "square":
-								wave.tone = Tone.Square;
-								Console.WriteLine( "音色: 矩形波" );
-								break;
-							case "tri":
-								wave.tone = Tone.Tri;
-								Console.WriteLine( "音色: 三角波" );
-								break;
-							case "saw":
-								wave.tone = Tone.Saw;
-								Console.WriteLine( "音色: のこぎり波" );
-								break;
-							case "noise":
-								wave.tone = Tone.Noise;
-								Console.WriteLine( "音色: ノイズ" );
-								break;
-							default:
+
+							case 4:
+								#region 音符の処理
 								double b;
-								if ( double.TryParse( str[0], out b ) ) {
-									wave.Add( new Note( b, int.Parse( str[1] ), double.Parse( str[2] ), double.Parse( str[3] ) ) );
-									if ( loop % 10 == 1 )
+
+								if ( double.TryParse( token[0], out b ) ) {
+									wave.Add( new Note( b, int.Parse( token[1] ), double.Parse( token[2] ), double.Parse( token[3] ) ) );
+
+									if ( LineNum % 10 == 1 ) {
 										Console.Write( "." );
+									}
 								} else {
-									Console.WriteLine( "【エラー】以下の行で書式が間違っています。" );
-									Console.WriteLine( Arg[0] + i.ToString() + ".txt " + loop.ToString() + "行目: " + '"' + tmp + '"' );
+									Error( "不明な記述: \"" + token[0] + "\"" );
 								}
+								#endregion
+								break;
+
+							default:
+								Error( "引数が多すぎませんか？" );
 								break;
 						}
 					} catch ( FormatException ) {
-						Console.WriteLine();
-						Console.WriteLine( "【エラー】以下の行で書式が間違っています。" );
-						Console.WriteLine( Arg[0] + i.ToString() + ".txt " + loop.ToString() + "行目: " + '"' + tmp + '"' );
-						Console.WriteLine();
+						Error( "不明なエラーです。" );
 					}
 				}
 
 				wave.NewTrack();
 			}
 
+			#region 終了
 			Console.WriteLine();
 			Console.WriteLine();
-			Console.WriteLine( "音声ファイルの作成が完了しました。" );
-			Console.WriteLine( "「" + Arg[0] +".wav」で再生できます。" );
+
+			if ( errors == 0 ) {
+				Console.WriteLine( "正常に楽譜データを読み込みました。" );
+				Console.WriteLine( "音声ファイルに出力します。" );
+			} else {
+				Console.WriteLine( "エラーが" + errors.ToString() + "個ありましたが、音声ファイルに出力します。" );
+			}
 
 			wave.Close();
+
+			Console.WriteLine();
+			Console.WriteLine( "音声ファイルへの出力が完了しました。" );
+			Console.WriteLine( "「" + FileName +".wav」で再生できます。" );
+			Console.WriteLine();
+			#endregion
 		}
 
-		private static string[] ToString(string Arg)
+		private static void Func( List<string> Arg )
 		{
-			var str = Arg.ToCharArray();
-			string[] res = { "", "", "", "" };
+			try {
+				switch ( FileName ) {
+					//引数なし
+					case "sine":
+						wave.tone = Tone.Sine;
+						Console.WriteLine( "音色: 正弦波" );
+						break;
+					case "square":
+						wave.tone = Tone.Square;
+						Console.WriteLine( "音色: 矩形波" );
+						break;
+					case "tri":
+						wave.tone = Tone.Tri;
+						Console.WriteLine( "音色: 三角波" );
+						break;
+					case "saw":
+						wave.tone = Tone.Saw;
+						Console.WriteLine( "音色: のこぎり波" );
+						break;
+					case "noise":
+						wave.tone = Tone.Noise;
+						Console.WriteLine( "音色: ノイズ" );
+						break;
 
-			for ( int i=0, j=0; i<str.Length && j<4; ++i ) {
-				if ( str[i]=='\t' || str[i]==' ' ) {
-					if ( res[j]!="" )
-						++j;
-				} else if ( j==0 )
-					res[j] += char.ToLower( str[i] );
-				else
-					res[j] += str[i];
+					//引数1つ
+					case "//":
+						Console.WriteLine( Arg[1] );
+						break;
+					case "r":
+						wave.Rest( int.Parse( Arg[1] ) );
+						break;
+					case "t":
+						wave.tempo = double.Parse( Arg[1] );
+						Console.WriteLine( "テンポ: " + Arg[1] );
+						break;
+					case "p":
+						wave.panpot = double.Parse( Arg[1] );
+						Console.WriteLine( "パンポット: " + Arg[1] );
+						break;
+					case "v":
+						wave.volume = double.Parse( Arg[1] );
+						Console.WriteLine( "ボリューム: " + Arg[1] );
+						break;
+					case "e":
+						wave.expression = double.Parse( Arg[1] );
+						Console.WriteLine( "エクスプレッション: " + Arg[1] );
+						break;
+					case "dv":
+						wave.delay_vol = double.Parse( Arg[1] );
+						Console.WriteLine( "ディレイ音量: " + Arg[1] );
+						break;
+					case "ds":
+						wave.delay_tim = double.Parse( Arg[1] );
+						Console.WriteLine( "ディレイ速度: " + Arg[1] );
+						break;
+					case "cv":
+						wave.chorus_vol = double.Parse( Arg[1] );
+						Console.WriteLine( "コーラス音量: " + Arg[1] );
+						break;
+					case "cw":
+						wave.chorus_wid = double.Parse( Arg[1] );
+						Console.WriteLine( "コーラス幅: " + Arg[1] );
+						break;
+					case "vd":
+						wave.vib_dep = double.Parse( Arg[1] );
+						Console.WriteLine( "ビブラート幅: " + Arg[1] );
+						break;
+					case "vf":
+						wave.vib_fre = double.Parse( Arg[1] );
+						Console.WriteLine( "ビブラート速度: " + Arg[1] );
+						break;
+				}
+			} catch ( IndexOutOfRangeException ) {
+
+			}
+		}
+
+		private static void Error( string Arg )
+		{
+			Console.WriteLine();
+			Console.WriteLine( "【エラー】以下の行で不明な記述があります。" );
+			Console.WriteLine( FileName + FileNum.ToString() + ".txt" );
+			Console.WriteLine( LineNum.ToString() + "行目: \"" + LineStr + "\"" );
+			Console.WriteLine();
+			Console.WriteLine( Arg );
+			Console.WriteLine();
+			++errors;
+		}
+
+		private static List<string> Tokenize( string Arg )
+		{
+			//引数の文字列を小文字に統一し、トークン化
+			var split = new List<string>( Arg.ToLower().Split( new char[] { ' ', '\t' } ) );
+			var res = new List<string>();
+
+			//空のトークンを無視して、戻り値のリストに追加
+			foreach ( var i in split ) {
+				if ( i != "" ) {
+					res.Add( i );
+				}
 			}
 
 			return res;

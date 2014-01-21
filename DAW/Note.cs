@@ -7,7 +7,7 @@
 		public double GT; //発音時間
 		public double Vel; //音量
 
-		public Note(double key, int st, double gt, double vel)
+		public Note( double key, int st, double gt, double vel )
 		{
 			//音符
 			Key = key;
@@ -16,7 +16,7 @@
 			Vel = vel;
 		}
 
-		public Note(int st)
+		public Note( int st )
 		{
 			//休符
 			Key = -1;

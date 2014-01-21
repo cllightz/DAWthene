@@ -7,7 +7,7 @@
 		public double Left;
 		public double Right;
 
-		public Stereo(double left, double right)
+		public Stereo( double left, double right )
 		{
 			Left = left;
 			Right = right;

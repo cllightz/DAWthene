@@ -53,7 +53,7 @@ namespace DAW
 		private double NoiseLast;	//前のサンプルでの量子
 		#endregion
 
-		public WAVE(string Arg)
+		public WAVE( string Arg )
 		{
 			Bytes = sizeof( short );	//16[bit]
 
@@ -63,9 +63,9 @@ namespace DAW
 			H_fmt = new byte[4] { 0x66, 0x6d, 0x74, 0x20 };		//"fmt "
 			H_fmt_Ch = 2;										//ステレオ
 			H_fmt_Sam = 44100;									//44100[Hz]
-			H_fmt_BySe = (uint)(Bytes * H_fmt_Ch * H_fmt_Sam);
-			H_fmt_Blo = (ushort)(Bytes * H_fmt_Ch);
-			H_fmt_BiSa = (ushort)(Bytes * 8);
+			H_fmt_BySe = (uint)( Bytes * H_fmt_Ch * H_fmt_Sam );
+			H_fmt_Blo = (ushort)( Bytes * H_fmt_Ch );
+			H_fmt_BiSa = (ushort)( Bytes * 8 );
 			H_data = new byte[4] { 0x64, 0x61, 0x74, 0x61 };	//"data"
 			H_data_Size = 0;
 
@@ -101,7 +101,7 @@ namespace DAW
 			NoiseLast = 0.0;
 		}
 
-		private void Marge(Stereo Arg)
+		private void Marge( Stereo Arg )
 		{
 			if ( pos == data.Count )
 				data.Add( Arg );
@@ -121,11 +121,11 @@ namespace DAW
 			low = 0.0;
 		}
 
-		public void Add(Note Arg)
+		public void Add( Note Arg )
 		{
 			double Key = Arg.Key - root;
 
-			Arg.GT = (Arg.GT > 100) ? 100 : Arg.GT;
+			Arg.GT = ( Arg.GT > 100 ) ? 100 : Arg.GT;
 
 			double x=0, y=0, z=0, vib=0, prev=0, left=0, center=0, right=0;
 
@@ -149,85 +149,85 @@ namespace DAW
 					low = Saw( z ) * SaV;
 				} else if ( tone == Tone.Noise ) {
 					high = 0.0;
-					mid = Noise( Key ) / (short.MaxValue * 0.5) * NoV;
+					mid = Noise( Key ) / ( short.MaxValue * 0.5 ) * NoV;
 					low = 0.0;
 				}
 
 				high *= chorus_vol;
 				low *= chorus_vol;
 
-				center = (high + mid + low) * volume * expression * Arg.Vel;
+				center = ( high + mid + low ) * volume * expression * Arg.Vel;
 				prev = center;
 
-				left = center * (panpot - 100) * -1;
-				right = center * (panpot + 100);
+				left = center * ( panpot - 100 ) * -1;
+				right = center * ( panpot + 100 );
 				Marge( new Stereo( left, right ) );
 
-				x += Freq( Key, Math.Sin( vib ) * vib_dep + chorus_wid ) / (double)H_fmt_Sam * (Math.PI * 2.0);
-				y += Freq( Key, Math.Sin( vib ) * vib_dep ) / (double)H_fmt_Sam * (Math.PI * 2.0);
-				z += Freq( Key, Math.Sin( vib ) * vib_dep - chorus_wid ) / (double)H_fmt_Sam * (Math.PI * 2.0);
+				x += Freq( Key, Math.Sin( vib ) * vib_dep + chorus_wid ) / (double)H_fmt_Sam * ( Math.PI * 2.0 );
+				y += Freq( Key, Math.Sin( vib ) * vib_dep ) / (double)H_fmt_Sam * ( Math.PI * 2.0 );
+				z += Freq( Key, Math.Sin( vib ) * vib_dep - chorus_wid ) / (double)H_fmt_Sam * ( Math.PI * 2.0 );
 
 				vib += vib_fre * Math.PI*2.0 / (double)H_fmt_Sam;
 			}
 
-			for ( int i=0; i<(GetGT( Arg.ST, 100 ) - GetGT( Arg.ST, Arg.GT )); ++i )
+			for ( int i=0; i<( GetGT( Arg.ST, 100 ) - GetGT( Arg.ST, Arg.GT ) ); ++i )
 				Next();
 		}
 
-		private double Freq(double Key, double Pitch)
+		private double Freq( double Key, double Pitch )
 		{
-			return A * Math.Pow( 2.0, (Key + Pitch) / 12.0 );
+			return A * Math.Pow( 2.0, ( Key + Pitch ) / 12.0 );
 		}
 
-		public void Rest(int ST)
+		public void Rest( int ST )
 		{
 			for ( int i=0; i<GetGT( ST, 100 ); ++i )
 				Next();
 		}
 
-		private double GetGT(int ST, double GT)
+		private double GetGT( int ST, double GT )
 		{
-			return ((double)ST * GT * (double)H_fmt_Sam) / (100.0 * 480.0 * (tempo / 60.0));
+			return ( (double)ST * GT * (double)H_fmt_Sam ) / ( 100.0 * 480.0 * ( tempo / 60.0 ) );
 		}
 
-		private double Sine(double Arg)
+		private double Sine( double Arg )
 		{
 			return Math.Sin( Arg );
 		}
 
-		private double Square(double Arg)
+		private double Square( double Arg )
 		{
-			return ((Math.Sin( Arg ) >= 0.0) ? 1.0 : -1.0);
+			return ( ( Math.Sin( Arg ) >= 0.0 ) ? 1.0 : -1.0 );
 		}
 
-		private double Tri(double Arg)
+		private double Tri( double Arg )
 		{
-			double a = Arg - Math.Floor( Arg / (Math.PI * 2.0) ) * Math.PI * 2.0;
+			double a = Arg - Math.Floor( Arg / ( Math.PI * 2.0 ) ) * Math.PI * 2.0;
 
 			if ( a < Math.PI * 0.5 )
-				return a / (Math.PI * 0.5);
+				return a / ( Math.PI * 0.5 );
 
 			if ( a < Math.PI * 1.5 )
-				return -1 * a / (Math.PI * 0.5) + 2.0;
+				return -1 * a / ( Math.PI * 0.5 ) + 2.0;
 
-			return a / (Math.PI * 0.5) - 4.0;
+			return a / ( Math.PI * 0.5 ) - 4.0;
 		}
 
-		private double Saw(double Arg)
+		private double Saw( double Arg )
 		{
-			double a = Arg - Math.Floor( Arg / (Math.PI * 2.0) ) * Math.PI * 2.0;
+			double a = Arg - Math.Floor( Arg / ( Math.PI * 2.0 ) ) * Math.PI * 2.0;
 
-			return (a / (Math.PI * 2.0) - 0.5) * 2.0;
+			return ( a / ( Math.PI * 2.0 ) - 0.5 ) * 2.0;
 		}
 
-		private double Noise(double Key)
+		private double Noise( double Key )
 		{
 			if ( Key==0 || NoiseDone%Key==0 ) {
 				byte[] a = new byte[1];
 				System.Security.Cryptography.RNGCryptoServiceProvider b = new System.Security.Cryptography.RNGCryptoServiceProvider();
 				b.GetBytes( a );
 				++NoiseDone;
-				return (100.0 * (double)Convert.ToInt16( a[0] ) - short.MaxValue * 0.375);
+				return ( 100.0 * (double)Convert.ToInt16( a[0] ) - short.MaxValue * 0.375 );
 			}
 
 			++NoiseDone;
@@ -250,7 +250,7 @@ namespace DAW
 
 		public void Close()
 		{
-			H_data_Size = (uint)((data.Count) * H_fmt_Ch * Bytes);
+			H_data_Size = (uint)( ( data.Count ) * H_fmt_Ch * Bytes );
 			H_FileSize = H_data_Size + H_fmt_Size + 20;
 
 			//			Console.WriteLine(H_FileSize.ToString());
@@ -276,7 +276,7 @@ namespace DAW
 			}
 		}
 
-		private void Write(double Arg)
+		private void Write( double Arg )
 		{
 			short New;
 
