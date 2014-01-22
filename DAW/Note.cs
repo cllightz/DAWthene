@@ -2,10 +2,10 @@
 {
 	class Note
 	{
-		public double Key; //音程
-		public int ST; //音符の長さ
-		public double GT; //発音時間
-		public double Vel; //音量
+		public double	Key;	//音程
+		public int		ST;		//音符の長さ
+		public double	GT;		//発音時間
+		public double	Vel;	//音量
 
 		public Note( double key, int st, double gt, double vel )
 		{

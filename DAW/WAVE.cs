@@ -7,7 +7,7 @@ namespace DAW
 {
 	class WAVE
 	{
-		#region メンバ
+		#region フィールド
 		private	byte	Bytes;
 
 		private	byte[]	H_RIFF;				//RIFFヘッダ
@@ -24,11 +24,9 @@ namespace DAW
 		private	byte[]	H_data;				//dataチャンク
 		private	uint	H_data_Size;		//dataチャンクのサイズ[byte]
 
-		private BinaryWriter file;		//出力先のファイル
+		private BinaryWriter file;	//出力先のファイル
 
-		private List< Stereo > data;	//マージ先のデータ
-
-		private int pos;				//現在処理中のサンプルの位置
+		private LinearPCM data;		//マージ先のデータ
 
 		public Tone tone;			//音色(デフォルトはsine)
 		public double tempo;		//テンポ(デフォルトは120BPM)
@@ -45,10 +43,8 @@ namespace DAW
 		private const double A = 6.875;	//なんの係数だっけ(忘れた)
 		private const int root = -3;	//根音……？
 
-		private double high;	//コーラスの上の音
-		private double mid;		//コーラスの真ん中の音
-		private double low;		//コーラスの下の音
-
+		private Chorus hml;			//ハモり
+		
 		private int NoiseDone;		//ノイズ関連
 		private double NoiseLast;	//前のサンプルでの量子
 		#endregion
@@ -73,10 +69,7 @@ namespace DAW
 			file = new BinaryWriter( new FileStream( Arg + ".wav", FileMode.Create, FileAccess.Write ) );
 
 			//マージ先のデータ
-			data = new List<Stereo>();
-
-			//現在処理中のサンプルの位置
-			pos = 0;
+			data = new LinearPCM();
 
 			//音符関連
 			tone = Tone.Sine;
@@ -92,9 +85,7 @@ namespace DAW
 			vib_fre = 0.0;
 
 			//コーラス関連
-			high = 0.0;
-			mid = 0.0;
-			low = 0.0;
+			hml = new Chorus();
 
 			//ノイズ関連
 			NoiseDone = 0;
@@ -103,22 +94,16 @@ namespace DAW
 
 		private void Marge( Stereo Arg )
 		{
-			if ( pos == data.Count )
-				data.Add( Arg );
-			else {
-				data[pos].Left += Arg.Left;
-				data[pos].Right += Arg.Right;
-			}
+			data.Marge( Arg );
 
-			Next();
+			hml.Reset();
 		}
 
 		public void NewTrack()
 		{
-			pos = 0;
-			high = 0.0;
-			mid = 0.0;
-			low = 0.0;
+			data.Rewind();
+
+			hml.Reset();
 		}
 
 		public void Add( Note Arg )
@@ -127,51 +112,58 @@ namespace DAW
 
 			Arg.GT = ( Arg.GT > 100 ) ? 100 : Arg.GT;
 
-			double x=0, y=0, z=0, vib=0, prev=0, left=0, center=0, right=0;
+			double x = 0;
+			double y = 0;
+			double z = 0;
+			double vib = 0;
+			//double prev = 0;
+			double left = 0;
+			double center = 0;
+			double right = 0;
 
-			for ( int i=0; i<GetGT( Arg.ST, Arg.GT ); ++i ) {
-				const double SiV=2.0, SqV=0.7, TrV=2.0, SaV=0.8, NoV=0.5;
+			for ( int i = 0; i < GetGT( Arg.ST, Arg.GT ); ++i ) {
+				const double SiV = 2.0; //sineの音量の係数
+				const double SqV = 0.7; //Squareの音量の係数
+				const double TrV = 2.0; //Triの音量の係数
+				const double SaV = 0.8; //Sawの音量の係数
+				const double NoV = 0.5; //Noiseの音量の係数
+
 				if ( tone == Tone.Sine ) {
-					high = Sine( x ) * SiV;
-					mid = Sine( y ) * SiV;
-					low = Sine( z ) * SiV;
+					hml.Set( Sine( x ), Sine( y ), Sine( z ) );
+					hml *= SiV;
 				} else if ( tone == Tone.Square ) {
-					high = Square( x ) * SqV;
-					mid = Square( y ) * SqV;
-					low = Square( z ) * SqV;
+					hml.Set( Square( x ), Square( y ), Square( z ) );
+					hml *= SqV;
 				} else if ( tone == Tone.Tri ) {
-					high = Tri( x ) * TrV;
-					mid = Tri( y ) * TrV;
-					low = Tri( z ) * TrV;
+					hml.Set( Tri( x ), Tri( y ), Tri( z ) );
+					hml *= TrV;
 				} else if ( tone == Tone.Saw ) {
-					high = Saw( x ) * SaV;
-					mid = Saw( y ) * SaV;
-					low = Saw( z ) * SaV;
+					hml.Set( Saw( x ), Saw( y ), Saw( z ) );
+					hml *= SaV;
 				} else if ( tone == Tone.Noise ) {
-					high = 0.0;
-					mid = Noise( Key ) / ( short.MaxValue * 0.5 ) * NoV;
-					low = 0.0;
+					hml.Set( Noise( Key ) / ( short.MaxValue * 0.5 ) * NoV );
 				}
 
-				high *= chorus_vol;
-				low *= chorus_vol;
+				hml.high *= chorus_vol;
+				hml.low *= chorus_vol;
 
-				center = ( high + mid + low ) * volume * expression * Arg.Vel;
-				prev = center;
+				center = (double)hml * volume * expression * Arg.Vel;
+				//prev = center;
 
-				left = center * ( panpot - 100 ) * -1;
-				right = center * ( panpot + 100 );
+				left = center * ( 100 - panpot );
+				right = center * ( 100 + panpot );
 				Marge( new Stereo( left, right ) );
 
 				x += Freq( Key, Math.Sin( vib ) * vib_dep + chorus_wid ) / (double)H_fmt_Sam * ( Math.PI * 2.0 );
 				y += Freq( Key, Math.Sin( vib ) * vib_dep ) / (double)H_fmt_Sam * ( Math.PI * 2.0 );
 				z += Freq( Key, Math.Sin( vib ) * vib_dep - chorus_wid ) / (double)H_fmt_Sam * ( Math.PI * 2.0 );
 
-				vib += vib_fre * Math.PI*2.0 / (double)H_fmt_Sam;
+				vib += vib_fre * Math.PI * 2.0 / (double)H_fmt_Sam;
 			}
 
-			for ( int i=0; i<( GetGT( Arg.ST, 100 ) - GetGT( Arg.ST, Arg.GT ) ); ++i )
+			for ( int i = 0; i < ( GetGT( Arg.ST, 100 ) - GetGT( Arg.ST, Arg.GT ) ); ++i ) {
 				Next();
+			}
 		}
 
 		private double Freq( double Key, double Pitch )
@@ -181,8 +173,9 @@ namespace DAW
 
 		public void Rest( int ST )
 		{
-			for ( int i=0; i<GetGT( ST, 100 ); ++i )
+			for ( int i = 0; i < GetGT( ST, 100 ); ++i ) {
 				Next();
+			}
 		}
 
 		private double GetGT( int ST, double GT )
@@ -190,6 +183,7 @@ namespace DAW
 			return ( (double)ST * GT * (double)H_fmt_Sam ) / ( 100.0 * 480.0 * ( tempo / 60.0 ) );
 		}
 
+		#region 音色
 		private double Sine( double Arg )
 		{
 			return Math.Sin( Arg );
@@ -233,21 +227,14 @@ namespace DAW
 			++NoiseDone;
 			return NoiseLast;
 		}
+		#endregion
 
 		private void Next()
 		{
-			if ( pos == data.Count ) {
-				data.Add( new Stereo( 0.0, 0.0 ) );
-				++pos;
-			} else {
-				++pos;
-			}
-
-			high = 0.0;
-			mid = 0.0;
-			low = 0.0;
+			data.Next();
+			hml.Reset();
 		}
-
+		
 		public void Close()
 		{
 			H_data_Size = (uint)( ( data.Count ) * H_fmt_Ch * Bytes );
@@ -281,14 +268,14 @@ namespace DAW
 			short New;
 
 			if ( Arg > short.MaxValue ) {
-				//				Console.WriteLine(Arg.ToString());
 				New = short.MaxValue;
 			} else if ( Arg < short.MinValue ) {
-				//				Console.WriteLine(Arg.ToString());
 				New = short.MinValue;
-			} else
+			} else { 
 				New = (short)Arg;
+			}
 
+			//Console.WriteLine( ( (short)Arg ).ToString() );
 			file.Write( New );
 		}
 	}

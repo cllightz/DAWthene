@@ -8,12 +8,14 @@ namespace DAW
 {
 	class DAW
 	{
-		private static WAVE wave;
-		private static string FileName;
-		private static int FileNum;
-		private static int LineNum;
-		private static string LineStr;
-		private static int errors;
+		#region フィールド
+		private static WAVE		wave;
+		private static string	FileName;	//出力先ファイル名・入力元ファイル名(Arg[0])
+		private static int		FileNum;	//入力元ファイルの番号
+		private static int		LineNum;	//処理中の行
+		private static string	LineStr;	//処理中の行の文字列
+		private static int		errors;		//総エラー数
+		#endregion
 
 		public static void Main( string[] Arg )
 		{
@@ -127,7 +129,7 @@ namespace DAW
 		private static void Func( List<string> Arg )
 		{
 			try {
-				switch ( FileName ) {
+				switch ( Arg[0] ) {
 					//引数なし
 					case "sine":
 						wave.tone = Tone.Sine;
